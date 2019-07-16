@@ -1,7 +1,10 @@
 package com.erikriosetiawan.mynotesapp;
 
+import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -21,6 +24,11 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import static com.erikriosetiawan.mynotesapp.db.DatabaseContract.NoteColumns.CONTENT_URI;
+import static com.erikriosetiawan.mynotesapp.db.DatabaseContract.NoteColumns.DATE;
+import static com.erikriosetiawan.mynotesapp.db.DatabaseContract.NoteColumns.DESCRIPTION;
+import static com.erikriosetiawan.mynotesapp.db.DatabaseContract.NoteColumns.TITLE;
+
 public class NoteAddUpdateActivity extends AppCompatActivity implements View.OnClickListener {
 
     private EditText edtTitle, edtDescription;
@@ -31,7 +39,7 @@ public class NoteAddUpdateActivity extends AppCompatActivity implements View.OnC
 
     private boolean isEdit = false;
     public static final int REQUEST_ADD = 100;
-    public static final int RESULT_ADD = 101;
+    public static final int RESULT_ADStringD = 101;
     public static final int REQUEST_UPDATE = 200;
     public static final int RESULT_UPDATE = 201;
     public static final int RESULT_DELETE = 301;
@@ -60,6 +68,17 @@ public class NoteAddUpdateActivity extends AppCompatActivity implements View.OnC
             note = new Note();
         }
 
+        Uri uri = getIntent().getData();
+
+        if (uri != null) {
+            Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+
+            if (cursor != null) {
+                if (cursor.moveToFirst()) note = new Note(cursor);
+                cursor.close();
+            }
+        }
+
         String actionBarTitle;
         String btnTitle;
 
@@ -84,8 +103,10 @@ public class NoteAddUpdateActivity extends AppCompatActivity implements View.OnC
         if (v.getId() == R.id.btn_submit) {
             String title = edtTitle.getText().toString().trim();
             String description = edtDescription.getText().toString().trim();
+            boolean isEmpty = false;
 
             if (TextUtils.isEmpty(title)) {
+                isEmpty = true;
                 edtTitle.setError("Field can not be blank");
                 return;
             }
@@ -97,24 +118,21 @@ public class NoteAddUpdateActivity extends AppCompatActivity implements View.OnC
             intent.putExtra(EXTRA_NOTE, note);
             intent.putExtra(EXTRA_POSITION, position);
 
-            if (isEdit) {
-                long result = noteHelper.updateNote(note);
-                if (result > 0) {
-                    setResult(RESULT_UPDATE, intent);
-                    finish();
-                } else {
-                    Toast.makeText(NoteAddUpdateActivity.this, "Gagal mengupdate data", Toast.LENGTH_SHORT).show();
-                }
-            } else {
-                note.setDate(getCurrentDate());
-                long result = noteHelper.insertNote(note);
+            if (!isEmpty) {
+                ContentValues values = new ContentValues();
+                values.put(TITLE, title);
+                values.put(DESCRIPTION, description);
 
-                if (result > 0) {
-                    note.setId((int) result);
-                    setResult(RESULT_ADD, intent);
+                if (isEdit) {
+                    getContentResolver().update(getIntent().getData(), values, null, null);
+                    Toast.makeText(NoteAddUpdateActivity.this, "Satu item berhasil diedit", Toast.LENGTH_SHORT).show();
                     finish();
                 } else {
-                    Toast.makeText(NoteAddUpdateActivity.this, "Gagal menambah data", Toast.LENGTH_SHORT).show();
+                    values.put(DATE, getCurrentDate());
+                    note.setDate(getCurrentDate());
+                    Toast.makeText(NoteAddUpdateActivity.this, "Satu item berhasil disimpan", Toast.LENGTH_SHORT).show();
+                    getContentResolver().insert(CONTENT_URI, values);
+                    finish();
                 }
             }
         }
@@ -188,6 +206,8 @@ public class NoteAddUpdateActivity extends AppCompatActivity implements View.OnC
                                 finish();
                             } else {
                                 Toast.makeText(NoteAddUpdateActivity.this, "Gagal menghapus data", Toast.LENGTH_SHORT).show();
+                                getContentResolver().delete(getIntent().getData(), null, null);
+                                finish();
                             }
                         }
                     }

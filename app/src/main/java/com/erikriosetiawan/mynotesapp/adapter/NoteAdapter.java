@@ -2,6 +2,7 @@ package com.erikriosetiawan.mynotesapp.adapter;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
@@ -16,6 +17,8 @@ import com.erikriosetiawan.mynotesapp.R;
 import com.erikriosetiawan.mynotesapp.entity.Note;
 
 import java.util.ArrayList;
+
+import static com.erikriosetiawan.mynotesapp.db.DatabaseContract.NoteColumns.CONTENT_URI;
 
 public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder> {
 
@@ -63,13 +66,17 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder
 
     @Override
     public void onBindViewHolder(@NonNull NoteViewHolder noteViewHolder, int i) {
-        noteViewHolder.tvTitle.setText(listNotes.get(i).getTitle());
-        noteViewHolder.tvDate.setText(listNotes.get(i).getDate());
-        noteViewHolder.tvDescription.setText(listNotes.get(i).getDescription());
+        noteViewHolder.tvTitle.setText(getListNotes().get(i).getTitle());
+        noteViewHolder.tvDate.setText(getListNotes().get(i).getDate());
+        noteViewHolder.tvDescription.setText(getListNotes().get(i).getDescription());
         noteViewHolder.cvNote.setOnClickListener(new CustomOnItemClickListener(i, new CustomOnItemClickListener.OnItemClickCallback() {
             @Override
             public void onItemClicked(View view, int position) {
                 Intent intent = new Intent(activity, NoteAddUpdateActivity.class);
+                // Set intent dengan data uri row note by id
+                // content://com.erikriosetiawan.mynotesapp/note/id
+                Uri uri = Uri.parse(CONTENT_URI + "/" + getListNotes().get(position).getId());
+                intent.setData(uri);
                 intent.putExtra(NoteAddUpdateActivity.EXTRA_POSITION, position);
                 intent.putExtra(NoteAddUpdateActivity.EXTRA_NOTE, listNotes.get(position));
                 activity.startActivityForResult(intent, NoteAddUpdateActivity.REQUEST_UPDATE);

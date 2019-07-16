@@ -11,11 +11,11 @@ import com.erikriosetiawan.mynotesapp.entity.Note;
 
 import java.util.ArrayList;
 
-import static com.erikriosetiawan.mynotesapp.db.DatabaseContract.TABLE_NOTE;
+import static com.erikriosetiawan.mynotesapp.db.DatabaseContract.NoteColumns.*;
 
 public class NoteHelper {
 
-    private static final String DATABASE_TABLE = TABLE_NOTE;
+    private static final String DATABASE_TABLE = TABLE_NAME;
     private static DatabaseHelper databaseHelper;
     private static NoteHelper INSTANCE;
     private static SQLiteDatabase database;
@@ -90,6 +90,26 @@ public class NoteHelper {
     }
 
     public int deleteNote(int id) {
-        return database.delete(TABLE_NOTE, DatabaseContract.NoteColumns._ID + " = '" + id + "'", null);
+        return database.delete(TABLE_NAME, DatabaseContract.NoteColumns._ID + " = '" + id + "'", null);
+    }
+
+    public Cursor queryByIdProvider(String id) {
+        return database.query(DATABASE_TABLE, null, _ID + " = ?", new String[]{id}, null, null, null, null);
+    }
+
+    public Cursor queryProvider() {
+        return database.query(DATABASE_TABLE, null, null, null, null, null, _ID + " ASC");
+    }
+
+    public long insertProvider(ContentValues values) {
+        return database.insert(DATABASE_TABLE, null, values);
+    }
+
+    public int updateProvider(String id, ContentValues values) {
+        return database.update(DATABASE_TABLE, values, _ID + " = ?", new String[]{id});
+    }
+
+    public int deleteProvider(String id) {
+        return database.delete(DATABASE_TABLE, _ID + " = ?", new String[]{id});
     }
 }
